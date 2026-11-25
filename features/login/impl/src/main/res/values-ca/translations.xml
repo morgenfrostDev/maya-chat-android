@@ -22,8 +22,8 @@
   <string name="screen_onboarding_sign_in_to">"Inicia sessió a %1$s"</string>
   <string name="screen_onboarding_sign_in_with_qr_code">"Inicia sessió amb un codi QR"</string>
   <string name="screen_onboarding_sign_up">"Crea un compte"</string>
-  <string name="screen_onboarding_welcome_message">"Et donem la benvinguda a %1$s. Més ràpid i simple que mai."</string>
-  <string name="screen_onboarding_welcome_title">"Sigues el teu propi element"</string>
+  <string name="screen_onboarding_welcome_message">"Maya Chat porta els Nahuales al món de Matrix"</string>
+  <string name="screen_onboarding_welcome_title">"Sigues en el teu Nahual"</string>
   <string name="screen_qr_code_login_connecting_subtitle">"Establint una connexió segura"</string>
   <string name="screen_qr_code_login_connection_note_secure_state_description">"No s\'ha pogut establir una connexió segura amb el dispositiu nou. Els dispositius existents continuen sent segurs, no te n\'has de preocupar."</string>
   <string name="screen_qr_code_login_connection_note_secure_state_list_header">"I ara què?"</string>
