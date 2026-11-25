@@ -56,6 +56,12 @@ enum class ThemeOption : DropdownOption {
         override fun getText(): String = stringResource(R.string.theme_dark)
     },
 
+    Color {
+        @Composable
+        @ReadOnlyComposable
+        override fun getText(): String = stringResource(R.string.theme_color)
+    },
+
     Black {
         @Composable
         @ReadOnlyComposable

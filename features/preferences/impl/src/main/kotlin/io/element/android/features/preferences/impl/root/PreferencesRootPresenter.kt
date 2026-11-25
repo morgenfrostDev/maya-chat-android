@@ -116,6 +116,7 @@ class PreferencesRootPresenter(
                     Theme.Dark -> ThemeOption.Dark
                     Theme.Black -> ThemeOption.Black
                     Theme.Light -> ThemeOption.Light
+                    Theme.Color -> ThemeOption.Color
                 }
             }
         }
@@ -151,6 +152,7 @@ class PreferencesRootPresenter(
                         ThemeOption.Dark -> appPreferencesStore.setTheme(Theme.Dark.name)
                         ThemeOption.Black -> appPreferencesStore.setTheme(Theme.Black.name)
                         ThemeOption.Light -> appPreferencesStore.setTheme(Theme.Light.name)
+                        ThemeOption.Color -> appPreferencesStore.setTheme(Theme.Color.name)
                     }
                 }
             }
