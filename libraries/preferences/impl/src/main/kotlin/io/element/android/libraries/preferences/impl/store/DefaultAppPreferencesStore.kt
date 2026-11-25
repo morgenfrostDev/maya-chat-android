@@ -32,6 +32,9 @@ import kotlinx.coroutines.flow.map
 private val developerModeKey = booleanPreferencesKey("developerMode")
 private val customElementCallBaseUrlKey = stringPreferencesKey("elementCallBaseUrl")
 private val themeKey = stringPreferencesKey("theme")
+private val themeColorKey = stringPreferencesKey("themeColor")
+private val chatBackgroundImageKey = stringPreferencesKey("chatBackgroundImage")
+private val isChatBackgroundImageEnabledKey = booleanPreferencesKey("isChatBackgroundImageEnabled")
 private val hideInviteAvatarsKey = booleanPreferencesKey("hideInviteAvatars")
 private val otherAccountsExpandedKey = booleanPreferencesKey("otherAccountsExpanded")
 private val timelineMediaPreviewValueKey = stringPreferencesKey("timelineMediaPreviewValue")
@@ -49,6 +52,7 @@ private val callRingtoneDisplayNameKey = stringPreferencesKey("notificationCallR
 // URLs never contain a newline, so it is a safe delimiter to persist an ordered list in a single String.
 private const val HOMESERVER_HISTORY_DELIMITER = "\n"
 private const val MAX_HOMESERVER_HISTORY_SIZE = 20
+private const val DEFAULT_THEME_COLOR = "#4d00b2"
 
 @ContributesBinding(AppScope::class)
 class DefaultAppPreferencesStore(
@@ -107,6 +111,46 @@ class DefaultAppPreferencesStore(
     override fun isOtherAccountsExpandedFlow(): Flow<Boolean> {
         return store.data.map { prefs ->
             prefs[otherAccountsExpandedKey] ?: true
+        }
+    }
+
+    override suspend fun setThemeColor(colorHex: String) {
+        store.edit { prefs ->
+            prefs[themeColorKey] = colorHex
+        }
+    }
+
+    override fun getThemeColorFlow(): Flow<String> {
+        return store.data.map { prefs ->
+            prefs[themeColorKey] ?: DEFAULT_THEME_COLOR
+        }
+    }
+
+    override suspend fun setChatBackgroundImage(uri: String?) {
+        store.edit { prefs ->
+            if (uri != null) {
+                prefs[chatBackgroundImageKey] = uri
+            } else {
+                prefs.remove(chatBackgroundImageKey)
+            }
+        }
+    }
+
+    override fun getChatBackgroundImageFlow(): Flow<String?> {
+        return store.data.map { prefs ->
+            prefs[chatBackgroundImageKey]
+        }
+    }
+
+    override suspend fun setChatBackgroundImageEnabled(enabled: Boolean) {
+        store.edit { prefs ->
+            prefs[isChatBackgroundImageEnabledKey] = enabled
+        }
+    }
+
+    override fun isChatBackgroundImageEnabledFlow(): Flow<Boolean> {
+        return store.data.map { prefs ->
+            prefs[isChatBackgroundImageEnabledKey] ?: true
         }
     }
 
