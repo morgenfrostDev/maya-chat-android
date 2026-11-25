@@ -21,6 +21,7 @@ enum class Theme {
     Dark,
     Black,
     Light,
+    Color,
 }
 
 private fun Theme.coerceBlackTheme(allowBlackTheme: Boolean): Theme {
@@ -32,7 +33,7 @@ fun Theme.isDark(): Boolean {
     return when (this) {
         Theme.System -> isSystemThemeDark()
         Theme.Dark, Theme.Black -> true
-        Theme.Light -> false
+        Theme.Light, Theme.Color -> false
     }
 }
 
@@ -54,7 +55,7 @@ private fun isSystemThemeDark(): Boolean {
 
 fun Flow<String?>.mapToTheme(allowBlackTheme: Boolean): Flow<Theme> = map {
     when (it) {
-        null -> Theme.System
+        null -> Theme.Color
         else -> Theme.valueOf(it)
     }.coerceBlackTheme(allowBlackTheme)
 }

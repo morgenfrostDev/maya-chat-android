@@ -76,10 +76,28 @@ object ElementTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalCompoundColors.current.isLight
+
+    /**
+     * Returns the current [Theme] provided by [ElementTheme].
+     */
+    val theme: Theme
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalTheme.current
+
+    /**
+     * Returns the current main theme color provided by [ElementTheme].
+     */
+    val mainThemeColor: Color
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalMainThemeColor.current
 }
 
 // Global variables (application level)
 internal val LocalCompoundColors = staticCompositionLocalOf { compoundColorsLight }
+internal val LocalTheme = staticCompositionLocalOf { Theme.System }
+internal val LocalMainThemeColor = staticCompositionLocalOf { Color(0xFF4D00B2) }
 
 /**
  * Sets up the theme for the application, or a part of it.
@@ -101,7 +119,11 @@ internal val LocalCompoundColors = staticCompositionLocalOf { compoundColorsLigh
 fun ElementTheme(
     theme: Theme = if (isSystemInDarkTheme()) Theme.Dark else Theme.Light,
     applySystemBarsUpdate: Boolean = true,
-    lightStatusBar: Boolean = !theme.isDark(),
+    mainThemeColor: Color = Color(0xFF4D00B2),
+    lightStatusBar: Boolean = when (theme) {
+        Theme.Color -> mainThemeColor.hsvSaturation() * 100f < 50f
+        else -> !theme.isDark()
+    },
     // true to enable MaterialYou
     dynamicColor: Boolean = false,
     compoundLight: SemanticColors = compoundColorsLight,
@@ -111,17 +133,19 @@ fun ElementTheme(
     typography: Typography = compoundTypography,
     content: @Composable () -> Unit,
 ) {
-    val darkTheme = theme.isDark()
-    val currentCompoundColor = when {
-        darkTheme -> if (theme == Theme.Black) {
-            compoundDark.copy(
-                bgCanvasDefault = Color.Black,
-                separatorSecondary = DarkColorTokens.colorGray400,
-            )
-        } else {
-            compoundDark
-        }
-        else -> compoundLight
+    val darkTheme = when (theme) {
+        Theme.Color -> mainThemeColor.hsvSaturation() * 100f >= 50f
+        else -> theme.isDark()
+    }
+    val currentCompoundColor = when (theme) {
+        Theme.Color -> createCompoundColorTheme(mainThemeColor)
+        Theme.Black -> compoundDark.copy(
+            bgCanvasDefault = Color.Black,
+            separatorSecondary = DarkColorTokens.colorGray400,
+        )
+        Theme.Dark -> compoundDark
+        Theme.Light -> compoundLight
+        Theme.System -> if (darkTheme) compoundDark else compoundLight
     }
 
     val colorScheme = when {
@@ -129,11 +153,9 @@ fun ElementTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> if (theme == Theme.Black) {
-            currentCompoundColor.toMaterialColorScheme()
-        } else {
-            materialColorsDark
-        }
+        theme == Theme.Color -> currentCompoundColor.toMaterialColorScheme()
+        theme == Theme.Black -> currentCompoundColor.toMaterialColorScheme()
+        darkTheme -> materialColorsDark
         else -> materialColorsLight
     }
 
@@ -151,11 +173,12 @@ fun ElementTheme(
     if (applySystemBarsUpdate) {
         val activity = LocalActivity.current as? ComponentActivity
         LaunchedEffect(statusBarColorScheme, theme, lightStatusBar) {
+            val statusBarScrim = if (theme == Theme.Color) mainThemeColor else statusBarColorScheme.background
             activity?.enableEdgeToEdge(
                 // For Status bar use the background color of the app
                 statusBarStyle = SystemBarStyle.auto(
-                    lightScrim = statusBarColorScheme.background.toArgb(),
-                    darkScrim = statusBarColorScheme.background.toArgb(),
+                    lightScrim = statusBarScrim.toArgb(),
+                    darkScrim = statusBarScrim.toArgb(),
                     detectDarkMode = { !lightStatusBar }
                 ),
                 // For Navigation bar use a transparent color so the content can be seen through it
@@ -169,6 +192,8 @@ fun ElementTheme(
     }
     CompositionLocalProvider(
         LocalCompoundColors provides currentCompoundColor,
+        LocalTheme provides theme,
+        LocalMainThemeColor provides mainThemeColor,
         LocalContentColor provides colorScheme.onSurface,
         // Configure the keyboard focus style: Draw a blue inset ring around the focused component.
         // Ref: https://www.figma.com/design/hlbsmSekQorGRN1t2R9JEy/Accessibility-checks?node-id=271-42066
