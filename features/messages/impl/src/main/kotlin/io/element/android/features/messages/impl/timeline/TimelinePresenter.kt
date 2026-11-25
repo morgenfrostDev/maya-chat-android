@@ -123,7 +123,6 @@ class TimelinePresenter(
     private val timelineProtectionPresenter: Presenter<TimelineProtectionState>,
     private val clipboardHelper: ClipboardHelper,
     private val toastHelper: ToastHelper,
-    private val appPreferencesStore: AppPreferencesStore,
 ) : Presenter<TimelineState> {
     private val tag = "TimelinePresenter"
 

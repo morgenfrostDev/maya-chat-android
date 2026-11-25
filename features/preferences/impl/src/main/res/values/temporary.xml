@@ -19,4 +19,5 @@
     <string name="screen_advanced_settings_choose_background_image">Choose background image</string>
     <string name="common_custom">Custom</string>
     <string name="common_default">Default</string>
+    <string name="screen_advanced_settings_moderation_and_safety_section_title">Moderation and safety</string>
 </resources>

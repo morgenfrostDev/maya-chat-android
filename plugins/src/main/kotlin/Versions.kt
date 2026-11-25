@@ -39,7 +39,7 @@ private const val versionYear = 54
  * Winal of the version on 2 digits. Value must be in [1,19].
  * Do not update this value. it is updated by the release script.
  */
-private const val versionWinal = 11
+private const val versionWinal = 15
 
 /**
  * Release number in the winal. Value must be in [0,99].
