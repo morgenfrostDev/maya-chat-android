@@ -30,6 +30,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,6 +87,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -101,7 +103,9 @@ fun AttachmentsPreviewView(
         is SendActionState.Sending.Uploading -> false
         is SendActionState.Sending.Processing -> !state.sendActionState.displayProgress
         SendActionState.Done -> false
-        else -> true
+        SendActionState.Idle,
+        is SendActionState.Sending.ReadyToUpload,
+        is SendActionState.Failure -> true
     }
 
     fun postSendAttachment() {
@@ -256,7 +260,9 @@ private fun AttachmentSendStateView(
                     onRetry = onRetryClick
                 )
             }
-            else -> Unit
+            SendActionState.Idle,
+            is SendActionState.Sending.ReadyToUpload,
+            SendActionState.Done -> Unit
         }
     }
 }
@@ -355,9 +361,9 @@ private fun AttachmentPreviewContent(
         if (state.displayFileTooLargeError) {
             val maxFileUploadSize = state.mediaOptimizationSelectorState.maxUploadSize.dataOrNull()
             if (maxFileUploadSize != null) {
-                val content = stringResource(CommonStrings.dialog_file_too_large_to_upload_subtitle, sizeFormatter.format(maxFileUploadSize, true))
+                val content = stringResource(R.string.dialog_file_too_large_to_upload_subtitle, sizeFormatter.format(maxFileUploadSize, true))
                 AlertDialog(
-                    title = stringResource(CommonStrings.dialog_file_too_large_to_upload_title),
+                    title = stringResource(R.string.dialog_file_too_large_to_upload_title),
                     content = content,
                     onDismiss = { state.eventSink(AttachmentsPreviewEvent.CancelAndDismiss) },
                 )
@@ -465,13 +471,13 @@ private fun VideoQualitySelectorDialog(
     val sizeFormatter = rememberFileSizeFormatter()
 
     var localSelectedPreset by remember(selectedPreset) { mutableStateOf(selectedPreset) }
-    val subtitlePartNoFileSize = stringResource(CommonStrings.dialog_video_quality_selector_subtitle_no_file_size)
-    val subtitlePartWithFileSize = stringResource(CommonStrings.dialog_video_quality_selector_subtitle_file_size)
+    val subtitlePartNoFileSize = stringResource(R.string.dialog_video_quality_selector_subtitle_no_file_size)
+    val subtitlePartWithFileSize = stringResource(R.string.dialog_video_quality_selector_subtitle_file_size)
     val subtitle = remember(maxFileUploadSize) {
         buildString {
             append(subtitlePartNoFileSize)
             if (maxFileUploadSize != null) {
-                append(String.format(subtitlePartWithFileSize, sizeFormatter.format(maxFileUploadSize, true)))
+                append(String.format(Locale.getDefault(), subtitlePartWithFileSize, sizeFormatter.format(maxFileUploadSize, true)))
             }
         }
     }
@@ -586,6 +592,7 @@ internal fun VideoQualitySelectorDialogPreview() {
 }
 
 @Composable
+@ReadOnlyComposable
 fun VideoCompressionPreset.title(): String {
     return stringResource(
         when (this) {
@@ -597,6 +604,7 @@ fun VideoCompressionPreset.title(): String {
 }
 
 @Composable
+@ReadOnlyComposable
 fun VideoCompressionPreset.subtitle(): String {
     return stringResource(
         when (this) {

@@ -10,17 +10,6 @@ plugins {
     `kotlin-dsl-precompiled-script-plugins`
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
-}
-
-repositories {
-    mavenCentral()
-    google()
-}
-
 dependencies {
     implementation(libs.android.gradle.plugin)
     implementation(libs.kotlin.gradle.plugin)

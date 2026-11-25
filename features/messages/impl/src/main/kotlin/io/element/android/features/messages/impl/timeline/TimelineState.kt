@@ -45,6 +45,9 @@ data class TimelineState(
     // When true, formatted message bodies are rendered with the native Compose renderer.
     val useNewTimelineEventRenderer: Boolean,
     val chatBackgroundImageState: ChatBackgroundImageState,
+    // Multiplier applied to the timeline text. 1f is the regular app size.
+    val timelineFontScale: Float,
+    val areTimelineAnimationsEnabled: Boolean,
     val eventSink: (TimelineEvent) -> Unit,
 ) {
     private val lastTimelineEvent = timelineItems.firstOrNull { it is TimelineItem.Event } as? TimelineItem.Event
@@ -78,7 +81,8 @@ sealed interface FocusRequestState {
             is Requested -> eventId
             is Loading -> eventId
             is Success -> eventId
-            else -> null
+            None,
+            is Failure -> null
         }
     }
 }
@@ -86,6 +90,7 @@ sealed interface FocusRequestState {
 data class TimelineRoomInfo(
     val currentUserId: UserId,
     val isDm: Boolean,
+    val renderReadReceipts: Boolean,
     val name: String?,
     val userHasPermissionToSendMessage: Boolean,
     val userHasPermissionToSendReaction: Boolean,
@@ -120,7 +125,8 @@ fun TimelineState.isSelected(item: TimelineItem): Boolean {
     val selection = selectionState as? SelectionState.Active ?: return false
     return when (item) {
         is TimelineItem.Event -> selection.selectedEventIds.contains(item.eventId)
-        else -> false
+        is TimelineItem.Virtual,
+        is TimelineItem.GroupedEvents -> false
     }
 }
 
@@ -131,7 +137,8 @@ fun TimelineState.canSelect(item: TimelineItem): Boolean {
     val selection = selectionState as? SelectionState.Active ?: return false
     return when (item) {
         is TimelineItem.Event -> selection.action.canApplyTo(item)
-        else -> false
+        is TimelineItem.Virtual,
+        is TimelineItem.GroupedEvents -> false
     }
 }
 

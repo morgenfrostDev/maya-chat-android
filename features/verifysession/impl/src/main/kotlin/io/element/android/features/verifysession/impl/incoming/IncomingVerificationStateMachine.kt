@@ -35,6 +35,8 @@ class IncomingVerificationStateMachine(
             inState<State.AcceptingIncomingVerification> {
                 onEnterEffect {
                     sessionVerificationService.acceptVerificationRequest()
+                    // Either side may start the SAS verification, the SDK resolves the conflict if both do.
+                    sessionVerificationService.startSasVerification()
                 }
                 on { event: Event.DidReceiveChallenge, state ->
                     state.override { State.ChallengeReceived(event.data).andLogStateChange() }
@@ -71,7 +73,14 @@ class IncomingVerificationStateMachine(
                 on<Event.Cancel> { _, state: MachineState<State> ->
                     when (state.snapshot) {
                         State.Completed, State.Canceled -> state.noChange()
-                        else -> {
+                        is State.Initial,
+                        State.AcceptingIncomingVerification,
+                        State.RejectingIncomingVerification,
+                        is State.ChallengeReceived,
+                        is State.AcceptingChallenge,
+                        is State.RejectingChallenge,
+                        State.Canceling,
+                        State.Failure -> {
                             sessionVerificationService.cancelVerification()
                             state.override { State.Canceled.andLogStateChange() }
                         }

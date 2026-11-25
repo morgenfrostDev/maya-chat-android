@@ -15,9 +15,14 @@ import io.element.android.features.preferences.impl.userstatus.UserStatusPickerS
 import io.element.android.features.preferences.impl.userstatus.UserStatusState
 import io.element.android.features.preferences.impl.userstatus.aUserStatusState
 import io.element.android.libraries.designsystem.utils.snackbar.SnackbarMessage
+import io.element.android.libraries.matrix.api.user.DisplayedStatus
 import io.element.android.libraries.matrix.api.user.MatrixUser
+import io.element.android.libraries.matrix.api.user.UserStatus
 import io.element.android.libraries.matrix.ui.components.aMatrixUser
 import io.element.android.libraries.matrix.ui.components.aMatrixUserList
+import io.element.android.libraries.matrix.ui.components.switchaccount.OtherAccount
+import io.element.android.libraries.matrix.ui.components.switchaccount.anOtherAccount
+import io.element.android.libraries.preferences.api.store.MessageTextSize
 import io.element.android.libraries.ui.strings.CommonStrings
 import kotlinx.collections.immutable.toImmutableList
 
@@ -63,6 +68,22 @@ open class PreferencesRootStatePreviewParam : PreviewParameterProvider<Preferenc
                     anOtherAccount(user = user, unreadCount = unreadCount)
                 },
             ),
+            // Other accounts with a status
+            aPreferencesRootState(
+                isMultiAccountEnabled = true,
+                isOtherAccountsSectionExpanded = true,
+                otherSessions = aMatrixUserList().drop(1).take(3).zip(
+                    listOf(
+                        DisplayedStatus.UserSet(UserStatus(emoji = "🌴", text = "On holiday")),
+                        DisplayedStatus.InCall(callJoinedTs = null),
+                        null
+                    )
+                ) { user, displayedStatus ->
+                    anOtherAccount(user = user.copy(displayedStatus = displayedStatus))
+                },
+            ),
+            // Message text at the largest size
+            aPreferencesRootState(messageTextSize = MessageTextSize.MAX),
         )
 }
 
@@ -74,6 +95,7 @@ fun aPreferencesRootState(
     isOtherAccountsSectionExpanded: Boolean = false,
     theme: ThemeOption = ThemeOption.System,
     availableThemeOptions: List<ThemeOption> = ThemeOption.entries,
+    messageTextSize: Int = MessageTextSize.DEFAULT,
     otherSessions: List<OtherAccount> = emptyList(),
     showAnalyticsSettings: Boolean = false,
     showDeveloperSettings: Boolean = false,
@@ -89,6 +111,7 @@ fun aPreferencesRootState(
     isMultiAccountEnabled = isMultiAccountEnabled,
     theme = theme,
     availableThemeOptions = availableThemeOptions.toImmutableList(),
+    messageTextSize = messageTextSize,
     isOtherAccountsSectionExpanded = isOtherAccountsSectionExpanded,
     otherSessions = otherSessions.toImmutableList(),
     showAnalyticsSettings = showAnalyticsSettings,
@@ -98,12 +121,4 @@ fun aPreferencesRootState(
     userStatusState = userStatusState,
     snackbarMessage = snackbarMessage,
     eventSink = eventSink,
-)
-
-fun anOtherAccount(
-    user: MatrixUser = aMatrixUser(),
-    unreadCount: Int = 0,
-) = OtherAccount(
-    user = user,
-    unreadCount = unreadCount,
 )

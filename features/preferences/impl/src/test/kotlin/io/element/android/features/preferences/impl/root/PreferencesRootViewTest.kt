@@ -24,6 +24,7 @@ import io.element.android.libraries.matrix.api.core.SessionId
 import io.element.android.libraries.matrix.api.user.MatrixUser
 import io.element.android.libraries.matrix.test.A_USER_ID_2
 import io.element.android.libraries.matrix.ui.components.aMatrixUser
+import io.element.android.libraries.matrix.ui.components.switchaccount.anOtherAccount
 import io.element.android.libraries.ui.strings.CommonStrings
 import io.element.android.tests.testutils.EnsureNeverCalled
 import io.element.android.tests.testutils.EnsureNeverCalledWithParam
@@ -133,7 +134,7 @@ class PreferencesRootViewTest : RobolectricTest() {
                 eventSink = eventsRecorder,
             ),
         )
-        clickOn(CommonStrings.common_switch_account)
+        clickOn(CommonStrings.common_switch_accounts)
         eventsRecorder.assertSingle(PreferencesRootEvent.ToggleOtherAccountsExpanded)
     }
 
@@ -155,7 +156,7 @@ class PreferencesRootViewTest : RobolectricTest() {
                 eventSink = eventsRecorder,
             ),
         )
-        assertNodeWithTextIsDisplayed(CommonStrings.common_switch_account)
+        assertNodeWithTextIsDisplayed(CommonStrings.common_switch_accounts)
         onNodeWithText("Bob").assertDoesNotExist()
         assertNoNodeWithText(CommonStrings.common_add_another_account)
     }
@@ -436,6 +437,7 @@ private fun AndroidComposeUiTest<ComponentActivity>.setView(
     onOpenMediaSettings: () -> Unit = EnsureNeverCalled(),
     onOpenLocationSettings: () -> Unit = EnsureNeverCalled(),
     onOpenLabs: () -> Unit = EnsureNeverCalled(),
+    onOpenMessageTextSize: () -> Unit = EnsureNeverCalled(),
     onEditProfileClick: (MatrixUser) -> Unit = EnsureNeverCalledWithParam(),
     onSecureBackupClick: () -> Unit = EnsureNeverCalled(),
     onManageAccountClick: (url: String) -> Unit = EnsureNeverCalledWithParam(),
@@ -454,6 +456,7 @@ private fun AndroidComposeUiTest<ComponentActivity>.setView(
             onAddAccountClick = onAddAccountClick,
             onSwitchToSession = onSwitchToSession,
             onOpenAnalytics = onOpenAnalytics,
+            onOpenMessageTextSize = onOpenMessageTextSize,
             onOpenLockScreenSettings = onOpenLockScreenSettings,
             onOpenAbout = onOpenAbout,
             onOpenDeveloperSettings = onOpenDeveloperSettings,

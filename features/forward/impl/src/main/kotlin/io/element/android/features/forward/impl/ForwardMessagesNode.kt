@@ -25,16 +25,17 @@ import io.element.android.features.forward.api.ForwardEntryPoint
 import io.element.android.libraries.architecture.NodeInputs
 import io.element.android.libraries.architecture.callback
 import io.element.android.libraries.architecture.inputs
-import io.element.android.libraries.di.SessionScope
+import io.element.android.libraries.di.RoomScope
 import io.element.android.libraries.matrix.api.core.EventId
 import io.element.android.libraries.matrix.api.core.RoomId
 import io.element.android.libraries.matrix.api.core.SessionId
-import io.element.android.libraries.matrix.api.timeline.TimelineProvider
 import io.element.android.libraries.roomselect.api.RoomSelectEntryPoint
 import io.element.android.libraries.roomselect.api.RoomSelectMode
 import kotlinx.parcelize.Parcelize
 
-@ContributesNode(SessionScope::class)
+private const val MAX_NUMBER_OF_ROOMS = 5
+
+@ContributesNode(RoomScope::class)
 @AssistedInject
 class ForwardMessagesNode(
     @Assisted buildContext: BuildContext,
@@ -55,13 +56,12 @@ class ForwardMessagesNode(
 
     data class Inputs(
         val eventIds: List<EventId>,
-        val timelineProvider: TimelineProvider,
         val fromRoomId: RoomId,
     ) : NodeInputs
 
     private val inputs = inputs<Inputs>()
     private val callback: ForwardEntryPoint.Callback = callback()
-    private val presenter = presenterFactory.create(inputs.eventIds, inputs.timelineProvider)
+    private val presenter = presenterFactory.create(inputs.eventIds)
 
     override fun resolve(navTarget: NavTarget, buildContext: BuildContext): Node {
         val callback = object : RoomSelectEntryPoint.Callback {
@@ -85,7 +85,7 @@ class ForwardMessagesNode(
             params = RoomSelectEntryPoint.Params(
                 sessionId = sessionId,
                 mode = RoomSelectMode.Forward(fromRoomId = inputs.fromRoomId),
-                maxNumberOfRooms = RoomSelectEntryPoint.DEFAULT_MAX_NUMBER_OF_ROOMS,
+                maxNumberOfRooms = MAX_NUMBER_OF_ROOMS,
             ),
             callback = callback,
         )

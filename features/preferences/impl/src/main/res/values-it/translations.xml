@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string name="full_screen_intent_banner_message">"Per non perdere mai una chiamata importante, modifica le impostazioni per consentire le notifiche a schermo intero quando il telefono è bloccato."</string>
-  <string name="full_screen_intent_banner_title">"Migliora la tua esperienza di chiamata"</string>
+  <string name="dialog_default_video_quality_selector_subtitle">"Seleziona la qualità predefinita dei video che carichi."</string>
+  <string name="dialog_default_video_quality_selector_title">"Qualità del caricamento video"</string>
+  <string name="full_screen_intent_banner_message_android">"Per non perdere mai una chiamata importante, modifica le impostazioni per consentire le notifiche a schermo intero quando il telefono è bloccato."</string>
+  <string name="full_screen_intent_banner_title_android">"Migliora la tua esperienza di chiamata"</string>
   <string name="screen_advanced_settings_choose_distributor_dialog_title_android">"Scegli come ricevere le notifiche"</string>
-  <string name="screen_advanced_settings_developer_mode">"Modalità sviluppatore"</string>
-  <string name="screen_advanced_settings_developer_mode_description">"Attiva per avere accesso alle funzionalità per sviluppatori."</string>
   <string name="screen_advanced_settings_element_call_base_url">"URL base di Element Call personalizzato"</string>
   <string name="screen_advanced_settings_element_call_base_url_description">"Imposta un URL di base personalizzato per Element Call."</string>
   <string name="screen_advanced_settings_element_call_base_url_validation_error">"URL non valido, assicurati di includere il protocollo (http/https) e l\'indirizzo corretto."</string>
   <string name="screen_advanced_settings_hide_invite_avatars_toggle_title">"Nascondi gli avatar nelle richieste di invito alle stanze"</string>
-  <string name="screen_advanced_settings_hide_timeline_media_toggle_title">"Nascondi le anteprime dei media nelle conversazioni"</string>
   <string name="screen_advanced_settings_labs">"Labs"</string>
   <string name="screen_advanced_settings_live_location_section_description">"La distanza che devi percorrere per attivare un aggiornamento."</string>
   <string name="screen_advanced_settings_live_location_section_footer">"Assicurati che l\'opzione \"Posizione precisa\" sia abilitata per questa app. Per modificare l\'autorizzazione, vai in %1$s."</string>
@@ -21,7 +20,6 @@
   </plurals>
   <string name="screen_advanced_settings_media_compression_description">"Carica foto e video più velocemente e riduci l\'utilizzo dei dati"</string>
   <string name="screen_advanced_settings_media_compression_title">"Ottimizza la qualità dei contenuti multimediali"</string>
-  <string name="screen_advanced_settings_moderation_and_safety_section_title">"Moderazione e Sicurezza"</string>
   <string name="screen_advanced_settings_optimise_image_upload_quality_description">"Ottimizza automaticamente le immagini per caricamenti più rapidi e file di dimensioni ridotte."</string>
   <string name="screen_advanced_settings_optimise_image_upload_quality_title">"Ottimizza la qualità del caricamento delle immagini"</string>
   <string name="screen_advanced_settings_optimise_video_upload_quality_description">"%1$s. Tocca qui per cambiarla."</string>
@@ -30,15 +28,12 @@
   <string name="screen_advanced_settings_optimise_video_upload_quality_standard">"Standard (720p)"</string>
   <string name="screen_advanced_settings_optimise_video_upload_quality_title">"Qualità del caricamento video"</string>
   <string name="screen_advanced_settings_push_provider_android">"Fornitore di notifiche push"</string>
-  <string name="screen_advanced_settings_rich_text_editor_description">"Disattiva l\'editor di testo avanzato per scrivere manualmente in Markdown"</string>
-  <string name="screen_advanced_settings_send_read_receipts">"Conferme di lettura"</string>
-  <string name="screen_advanced_settings_send_read_receipts_description">"Se disattivato, le tue conferme di visualizzazione non verranno inviate a nessuno. Riceverai comunque conferme di visualizzazione da altri utenti."</string>
   <string name="screen_advanced_settings_share_presence">"Condividi presenza online"</string>
   <string name="screen_advanced_settings_share_presence_description">"Se disattivato, non potrai né inviare né ricevere conferme di lettura o notifiche di scrittura."</string>
   <string name="screen_advanced_settings_show_media_timeline_always_hide">"Nascondi sempre"</string>
   <string name="screen_advanced_settings_show_media_timeline_always_show">"Mostra sempre"</string>
-  <string name="screen_advanced_settings_show_media_timeline_private_rooms">"Nelle stanze private"</string>
-  <string name="screen_advanced_settings_show_media_timeline_subtitle">"Un file multimediale nascosto può sempre essere visualizzato toccandolo"</string>
+  <string name="screen_advanced_settings_show_media_timeline_private_rooms">"Mostra nelle stanze private"</string>
+  <string name="screen_advanced_settings_show_media_timeline_subtitle">"I contenuti multimediali nascosti possono essere sempre visualizzati toccandoli."</string>
   <string name="screen_advanced_settings_show_media_timeline_title">"Mostra i media nella conversazione"</string>
   <string name="screen_advanced_settings_view_source_description">"Attiva l\'opzione per visualizzare il codice sorgente del messaggio nella conversazione."</string>
   <string name="screen_blocked_users_empty">"Non hai utenti bloccati"</string>
@@ -52,11 +47,18 @@
   <string name="screen_edit_profile_error_title">"Impossibile aggiornare il profilo"</string>
   <string name="screen_edit_profile_title">"Modifica profilo"</string>
   <string name="screen_edit_profile_updating_details">"Aggiornamento del profilo…"</string>
+  <string name="screen_labs_enable_gallery_description">"Invia più immagini o video contemporaneamente. Funziona su mobile, ma non è ancora supportato su web."</string>
+  <string name="screen_labs_enable_knocking">"Richiedi accesso"</string>
+  <string name="screen_labs_enable_knocking_description">"Gli utenti possono chiedere di entrare in una stanza che non è aperta a tutti. Stabile su mobile, l\'implementazione web esiste ma è sperimentale."</string>
   <string name="screen_labs_enable_threads">"Abilita le risposte alle discussioni"</string>
   <string name="screen_labs_enable_threads_description">"L\'app si riavvierà per applicare questa modifica."</string>
   <string name="screen_labs_header_description">"Prova le nostre ultime idee in fase di sviluppo. Queste funzionalità non sono definitive; potrebbero essere instabili e soggette a modifiche."</string>
   <string name="screen_labs_header_title">"Hai voglia di sperimentare?"</string>
   <string name="screen_labs_title">"Labs"</string>
+  <string name="screen_moderation_and_safety_invites_heading">"Inviti"</string>
+  <string name="screen_moderation_and_safety_other_users_heading">"Altri utenti"</string>
+  <string name="screen_moderation_and_safety_share_presence_heading">"Il tuo aspetto"</string>
+  <string name="screen_notification_settings_activity_section_title">"Attività"</string>
   <string name="screen_notification_settings_additional_settings_section_title">"Impostazioni aggiuntive"</string>
   <string name="screen_notification_settings_call_ringtone_label">"Suoneria di chiamata"</string>
   <string name="screen_notification_settings_calls_label">"Chiamate audio e video"</string>
@@ -84,7 +86,8 @@ Se procedi, alcune delle tue impostazioni potrebbero cambiare."</string>
   <string name="screen_notification_settings_mode_all">"Tutto"</string>
   <string name="screen_notification_settings_mode_mentions">"Menzioni"</string>
   <string name="screen_notification_settings_notification_section_title">"Avvisami per"</string>
-  <string name="screen_notification_settings_room_mention_label">"Avvisami con @room"</string>
+  <string name="screen_notification_settings_room_mention_label">"Menzioni di @room"</string>
+  <string name="screen_notification_settings_show_all_activity_title">"Mostra tutte le attività nella lista delle stanze"</string>
   <string name="screen_notification_settings_sound_custom_fallback">"Personalizzato"</string>
   <string name="screen_notification_settings_sound_custom_sound_button_title">"Suono personalizzato…"</string>
   <string name="screen_notification_settings_sound_delete_sound_error_title">"Errore durante l\'eliminazione del file"</string>
@@ -101,6 +104,7 @@ Se procedi, alcune delle tue impostazioni potrebbero cambiare."</string>
   <string name="screen_notification_settings_system_notifications_action_required_content_link">"impostazioni di sistema"</string>
   <string name="screen_notification_settings_system_notifications_turned_off">"Notifiche di sistema disattivate"</string>
   <string name="screen_notification_settings_title">"Notifiche"</string>
+  <string name="screen_settings_add_account">"Aggiungi account"</string>
   <string name="screen_settings_user_status_away">"Assente"</string>
   <string name="screen_settings_user_status_be_right_back">"Torno subito"</string>
   <string name="screen_settings_user_status_custom">"Personalizzato…"</string>
@@ -109,6 +113,7 @@ Se procedi, alcune delle tue impostazioni potrebbero cambiare."</string>
   <string name="screen_settings_user_status_in_a_meeting">"In una riunione"</string>
   <string name="screen_settings_user_status_on_the_road">"In viaggio"</string>
   <string name="screen_settings_user_status_placeholder">"Quale è il tuo stato?"</string>
+  <string name="settings_version_number">"Versione: %1$s (%2$s)"</string>
   <string name="theme_black">"Nero"</string>
   <string name="theme_dark">"Scuro"</string>
   <string name="theme_light">"Chiaro"</string>

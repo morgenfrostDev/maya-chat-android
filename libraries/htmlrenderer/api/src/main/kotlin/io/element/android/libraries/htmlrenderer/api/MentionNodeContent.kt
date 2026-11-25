@@ -8,6 +8,7 @@
 package io.element.android.libraries.htmlrenderer.api
 
 import androidx.compose.runtime.Immutable
+import io.element.android.libraries.matrix.api.core.EventId
 import io.element.android.libraries.matrix.api.core.RoomIdOrAlias
 import io.element.android.libraries.matrix.api.core.UserId
 
@@ -27,12 +28,15 @@ sealed interface MentionNodeContent {
     data class User(
         override val displayText: String,
         val userId: UserId,
+        val permalinkUrl: String,
     ) : MentionNodeContent
 
     /** A mention of a room (`<a href="matrix.to/#/#room:server">`). */
     data class Room(
         override val displayText: String,
         val roomIdOrAlias: RoomIdOrAlias,
+        val permalinkUrl: String,
+        val eventId: EventId? = null,
     ) : MentionNodeContent
 
     /** An `@room` mention notifying everyone in the room. */

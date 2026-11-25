@@ -71,12 +71,13 @@ class FakeFfiClient(
     private val isUserStatusSupportedResult: () -> Boolean = { false },
     private val isProfilesSlidingSyncExtensionSupportedResult: () -> Boolean = { false },
     private val subscribeToOwnProfileResult: (ProfileListener) -> Unit = {},
-    private val getUrlResult: (String) -> ByteArray = { lambdaError() },
     private val getMediaThumbnailResult: (MediaSource, ULong, ULong) -> ByteArray = { _, _, _ -> byteArrayOf() },
     private val contentScannerResult: () -> ContentScanner = { FakeFfiContentScanner() },
     private val runSearchBackfillResult: (SearchBackfillStrategy) -> TaskHandle = { lambdaError() },
     private val closeResult: () -> Unit = {},
     private val setDelegateResult: (ClientDelegate?) -> Unit = {},
+    private val ignoredUsersResult: () -> List<String> = { emptyList() },
+    private val subscribeToIgnoredUsersResult: (IgnoredUsersListener) -> Unit = {},
 ) : Client(NoHandle) {
     override fun userId(): String = userId
     override fun deviceId(): String = deviceId
@@ -109,11 +110,10 @@ class FakeFfiClient(
     override suspend fun clearCaches(syncService: SyncService?) = simulateLongTask { clearCachesResult() }
     override suspend fun setUtdDelegate(utdDelegate: UnableToDecryptDelegate) = withUtdHook(utdDelegate)
     override suspend fun getSessionVerificationController(): SessionVerificationController = FakeFfiSessionVerificationController()
-    override suspend fun ignoredUsers(): List<String> {
-        return emptyList()
-    }
+    override suspend fun ignoredUsers(): List<String> = simulateLongTask { ignoredUsersResult() }
 
     override fun subscribeToIgnoredUsers(listener: IgnoredUsersListener): TaskHandle {
+        subscribeToIgnoredUsersResult(listener)
         return FakeFfiTaskHandle()
     }
 
@@ -166,10 +166,6 @@ class FakeFfiClient(
 
     override suspend fun setAccountData(eventType: String, content: String) = simulateLongTask {
         setAccountDataResult(eventType, content)
-    }
-
-    override suspend fun getUrl(url: String): ByteArray = simulateLongTask {
-        getUrlResult(url)
     }
 
     override suspend fun contentScanner(): ContentScanner = simulateLongTask {

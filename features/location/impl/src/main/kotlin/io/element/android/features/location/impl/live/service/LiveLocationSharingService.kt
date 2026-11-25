@@ -18,6 +18,7 @@ import io.element.android.features.location.impl.common.userlocation.createLocat
 import io.element.android.features.location.impl.di.LocationBindings
 import io.element.android.features.location.impl.live.notification.LiveLocationSharingNotificationCreator
 import io.element.android.libraries.architecture.bindings
+import io.element.android.libraries.core.coroutine.CoroutineDispatchers
 import io.element.android.libraries.core.coroutine.childScope
 import io.element.android.libraries.core.extensions.runCatchingExceptions
 import io.element.android.libraries.di.annotations.AppCoroutineScope
@@ -26,7 +27,6 @@ import io.element.android.libraries.push.api.notifications.ForegroundServiceType
 import io.element.android.libraries.push.api.notifications.NotificationIdProvider
 import io.element.android.services.appnavstate.api.AppForegroundStateService
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.cancel
@@ -51,6 +51,7 @@ class LiveLocationSharingService : Service() {
     @Inject lateinit var notificationCreator: LiveLocationSharingNotificationCreator
     @Inject lateinit var appPreferencesStore: AppPreferencesStore
     @Inject lateinit var appForegroundStateService: AppForegroundStateService
+    @Inject lateinit var coroutineDispatchers: CoroutineDispatchers
 
     @AppCoroutineScope
     @Inject lateinit var appCoroutineScope: CoroutineScope
@@ -66,7 +67,7 @@ class LiveLocationSharingService : Service() {
         bindings<LocationBindings>().inject(this)
         runCatchingExceptions {
             appForegroundStateService.updateIsSharingLiveLocation(true)
-            coroutineScope = appCoroutineScope.childScope(Dispatchers.Default, "LiveLocationSharingService")
+            coroutineScope = appCoroutineScope.childScope(coroutineDispatchers.computation, "LiveLocationSharingService")
             val notificationId = NotificationIdProvider.getForegroundServiceNotificationId(ForegroundServiceType.LIVE_LOCATION)
             Timber.d("LiveLocationSharingService starting foreground service with notificationId=$notificationId")
             ServiceCompat.startForeground(
@@ -87,17 +88,21 @@ class LiveLocationSharingService : Service() {
         }
     }
 
+    // LocationEvent and LocationUnavailableReason are kept open by the library with internal subtypes, so else branches are required
+    @Suppress("ElseCaseInsteadOfExhaustiveWhen")
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun startLocationUpdatesListener() {
         Timber.d("LiveLocationSharingService listening to location updates")
         val locationProvider = createLocationProvider(context = applicationContext)
         appPreferencesStore.getLiveLocationMinimumDistanceInMetersUpdateFlow()
             .flatMapLatest { minDistanceMeters ->
-                val locationRequest = LocationRequest(
-                    accuracy = LocationAccuracy.Balanced,
-                    minimumInterval = UPDATE_INTERVAL_IN_SECOND.seconds,
+                val locationRequest = LocationRequest {
+                    // High accuracy is required: with Balanced, some fused providers (e.g. microG) never enable
+                    // the GPS, so no location update is received when no network location is available.
+                    accuracy = LocationAccuracy.High
+                    minimumInterval = UPDATE_INTERVAL_IN_SECOND.seconds
                     minimumDistance = minDistanceMeters.meters
-                )
+                }
                 locationProvider.updates(locationRequest)
             }
             .onEach { locationEvent ->
@@ -116,9 +121,13 @@ class LiveLocationSharingService : Service() {
                             LocationUnavailableReason.TemporarilyUnavailable -> Unit
                             LocationUnavailableReason.Unsupported,
                             LocationUnavailableReason.PermissionDenied,
-                            LocationUnavailableReason.UnexpectedFailure -> coordinator.dispatchUnrecoverableError()
+                            // The provider has no classification for the failure, it is unexpected.
+                            null -> coordinator.dispatchUnrecoverableError()
+                            // Reasons added in a future library version: keep sharing rather than hard failing.
+                            else -> Timber.w("Unhandled location unavailable reason: ${locationEvent.reason}")
                         }
                     }
+                    else -> Timber.w("Unhandled location event: $locationEvent")
                 }
             }
             .launchIn(coroutineScope)

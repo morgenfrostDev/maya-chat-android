@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,12 +74,19 @@ fun UserProfileHeaderSection(
             contentDescription = stringResource(CommonStrings.a11y_user_avatar),
             modifier = Modifier
                 .clip(CircleShape)
-                .clickable(
-                    enabled = avatarUrl != null,
-                    onClickLabel = stringResource(CommonStrings.action_view),
-                ) {
-                    openAvatarPreview(avatarUrl!!)
-                }
+                .then(
+                    if (avatarUrl != null) {
+                        Modifier.clickable(
+                            interactionSource = null,
+                            indication = ripple(focusRingShape = CircleShape),
+                            onClickLabel = stringResource(CommonStrings.action_view),
+                        ) {
+                            openAvatarPreview(avatarUrl)
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
                 .testTag(TestTags.memberDetailAvatar)
         )
         Spacer(modifier = Modifier.height(24.dp))

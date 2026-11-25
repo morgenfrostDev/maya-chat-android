@@ -12,6 +12,7 @@ import io.element.android.libraries.matrix.api.media.MediaPreviewValue
 import io.element.android.libraries.matrix.api.tracing.LogLevel
 import io.element.android.libraries.matrix.api.tracing.TraceLogPack
 import io.element.android.libraries.preferences.api.store.AppPreferencesStore
+import io.element.android.libraries.preferences.api.store.MessageTextSize
 import io.element.android.libraries.preferences.api.store.NotificationSound
 import io.element.android.libraries.preferences.api.store.NotificationSoundChannelConfig
 import kotlinx.coroutines.flow.Flow
@@ -29,6 +30,7 @@ class InMemoryAppPreferencesStore(
     themeColor: String = "#4d00b2",
     chatBackgroundImageUri: String? = null,
     isChatBackgroundImageEnabled: Boolean = true,
+    messageTextSize: Int = MessageTextSize.DEFAULT,
     liveLocationMinimumDistanceUpdate: Int = 10,
     logLevel: LogLevel = LogLevel.INFO,
     traceLogPacks: Set<TraceLogPack> = emptySet(),
@@ -47,6 +49,7 @@ class InMemoryAppPreferencesStore(
     private val themeColor = MutableStateFlow(themeColor)
     private val chatBackgroundImage = MutableStateFlow(chatBackgroundImageUri)
     private val isChatBackgroundImageEnabled = MutableStateFlow(isChatBackgroundImageEnabled)
+    private val messageTextSize = MutableStateFlow(messageTextSize)
     private val liveLocationMinimumDistanceUpdate = MutableStateFlow(liveLocationMinimumDistanceUpdate)
     private val logLevel = MutableStateFlow(logLevel)
     private val tracingLogPacks = MutableStateFlow(traceLogPacks)
@@ -114,6 +117,14 @@ class InMemoryAppPreferencesStore(
 
     override fun isChatBackgroundImageEnabledFlow(): Flow<Boolean> {
         return isChatBackgroundImageEnabled
+    }
+
+    override suspend fun setMessageTextSize(sizeSp: Int) {
+        messageTextSize.value = sizeSp
+    }
+
+    override fun getMessageTextSizeFlow(): Flow<Int> {
+        return messageTextSize
     }
 
     override suspend fun setLiveLocationMinimumDistanceInMetersUpdate(value: Int) {

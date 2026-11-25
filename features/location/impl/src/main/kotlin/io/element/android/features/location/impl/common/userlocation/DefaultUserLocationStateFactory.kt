@@ -22,6 +22,8 @@ import kotlin.time.Duration.Companion.seconds
 
 @ContributesBinding(RoomScope::class)
 class DefaultUserLocationStateFactory : UserLocationState.Factory {
+    // LocationEvent is kept open by the library with an internal subtype, so an else branch is required
+    @Suppress("ElseCaseInsteadOfExhaustiveWhen")
     @Composable
     override fun create(hasLocationPermission: Boolean): UserLocationState {
         val locationProvider = if (hasLocationPermission) {
@@ -30,17 +32,17 @@ class DefaultUserLocationStateFactory : UserLocationState.Factory {
             rememberNotGrantedLocationProvider()
         }
         val locationFlow = remember(locationProvider) {
-            val locationRequest = LocationRequest(
-                accuracy = LocationAccuracy.High,
-                minimumInterval = 5.seconds,
-                minimumDistance = 5.meters,
-            )
+            val locationRequest = LocationRequest {
+                accuracy = LocationAccuracy.High
+                minimumInterval = 5.seconds
+                minimumDistance = 5.meters
+            }
             locationProvider
                 .updates(locationRequest)
                 .mapNotNull { event ->
                     when (event) {
                         is LocationEvent.Update -> event.measurement
-                        is LocationEvent.Unavailable -> null
+                        else -> null
                     }
                 }
         }

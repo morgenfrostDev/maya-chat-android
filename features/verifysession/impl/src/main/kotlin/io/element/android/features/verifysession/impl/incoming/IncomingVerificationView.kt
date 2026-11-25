@@ -40,6 +40,7 @@ import io.element.android.libraries.designsystem.components.button.BackButton
 import io.element.android.libraries.designsystem.preview.ElementPreview
 import io.element.android.libraries.designsystem.preview.PreviewsDayNight
 import io.element.android.libraries.designsystem.theme.components.Button
+import io.element.android.libraries.designsystem.theme.components.InvisibleButton
 import io.element.android.libraries.designsystem.theme.components.OutlinedButton
 import io.element.android.libraries.designsystem.theme.components.Text
 import io.element.android.libraries.designsystem.theme.components.TextButton
@@ -160,7 +161,9 @@ private fun IncomingVerificationContent(
     when (step) {
         is Step.Initial -> ContentInitial(step, request)
         is Step.Verifying -> VerificationContentVerifying(step.data)
-        else -> Unit
+        Step.Canceled,
+        Step.Completed,
+        Step.Failure -> Unit
     }
 }
 
@@ -236,19 +239,28 @@ private fun IncomingVerificationBottomMenu(
             VerificationBottomMenu {
                 Button(
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.screen_session_verification_they_match),
+                    text = stringResource(
+                        if (step.isWaiting) {
+                            R.string.screen_session_verification_positive_button_verifying_ongoing
+                        } else {
+                            R.string.screen_session_verification_they_match
+                        }
+                    ),
                     enabled = !step.isWaiting,
                     showProgress = step.isWaiting,
                     onClick = {
                         eventSink(IncomingVerificationViewEvent.ConfirmVerification)
                     },
                 )
-                TextButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.screen_session_verification_they_dont_match),
-                    enabled = !step.isWaiting,
-                    onClick = { eventSink(IncomingVerificationViewEvent.DeclineVerification) },
-                )
+                if (step.isWaiting) {
+                    InvisibleButton()
+                } else {
+                    TextButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = stringResource(R.string.screen_session_verification_they_dont_match),
+                        onClick = { eventSink(IncomingVerificationViewEvent.DeclineVerification) },
+                    )
+                }
             }
         }
         Step.Canceled,

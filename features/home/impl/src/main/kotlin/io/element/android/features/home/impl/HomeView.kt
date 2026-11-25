@@ -265,7 +265,7 @@ private fun HomeScaffold(
                         }
                     }
                 },
-                totalUnreadCount = state.totalUnreadCount,
+                totalUnreadCount = state.totalUnreadCount.toInt(),
             )
         },
         floatingActionButtonPosition = FabPosition.Center,

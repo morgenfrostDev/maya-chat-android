@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -25,11 +26,14 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import im.vector.app.features.analytics.plan.Interaction
 import io.element.android.compound.tokens.generated.CompoundIcons
+import io.element.android.features.messages.impl.R
 import io.element.android.features.messages.impl.actionlist.ActionListEvent
 import io.element.android.features.messages.impl.actionlist.ActionListView
 import io.element.android.features.messages.impl.actionlist.model.TimelineItemAction
 import io.element.android.features.messages.impl.link.LinkEvent
 import io.element.android.features.messages.impl.link.LinkView
+import io.element.android.features.messages.impl.timeline.ComposeLocalTimelineEventRendererConfig
+import io.element.android.features.messages.impl.timeline.ProvideTimelineEventRendererConfig
 import io.element.android.features.messages.impl.timeline.TimelineEvent
 import io.element.android.features.messages.impl.timeline.components.TimelineItemRow
 import io.element.android.features.messages.impl.timeline.components.customreaction.CustomReactionBottomSheet
@@ -136,7 +140,7 @@ private fun PinnedMessagesListContent(
             PinnedMessagesListState.Failed -> {
                 ErrorDialog(
                     title = stringResource(id = CommonStrings.error_unknown),
-                    content = stringResource(id = CommonStrings.error_failed_loading_messages),
+                    content = stringResource(id = R.string.error_failed_loading_messages),
                     onSubmit = onErrorDismiss
                 )
             }
@@ -173,8 +177,8 @@ private fun PinnedMessagesListEmpty(
     ) {
         val pinActionText = stringResource(id = CommonStrings.action_pin)
         IconTitleSubtitleMolecule(
-            title = stringResource(id = CommonStrings.screen_pinned_timeline_empty_state_headline),
-            subTitle = stringResource(id = CommonStrings.screen_pinned_timeline_empty_state_description, pinActionText),
+            title = stringResource(id = R.string.screen_pinned_timeline_empty_state_headline),
+            subTitle = stringResource(id = R.string.screen_pinned_timeline_empty_state_description, pinActionText),
             iconStyle = BigIcon.Style.Default(CompoundIcons.Pin()),
         )
     }
@@ -235,63 +239,83 @@ private fun PinnedMessagesListLoaded(
         onVerifiedUserSendFailureClick = {}
     )
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        state = rememberLazyListState(),
-        reverseLayout = true,
-        contentPadding = lazyColumnContentPadding + PaddingValues(vertical = 8.dp),
+    val rendererConfig = remember(
+        state.timelineRoomInfo.currentUserId,
+        state.timelineFontScale,
+        state.useNewTimelineEventRenderer,
     ) {
-        items(
-            items = state.timelineItems,
-            contentType = { timelineItem -> timelineItem.contentType() },
-            key = { timelineItem -> timelineItem.identifier() },
-        ) { timelineItem ->
-            TimelineItemRow(
-                timelineItem = timelineItem,
-                timelineMode = Timeline.Mode.PinnedEvents,
-                timelineRoomInfo = state.timelineRoomInfo,
-                timelineProtectionState = state.timelineProtectionState,
-                isLastOutgoingMessage = false,
-                focusedEventId = null,
-                onUserDataClick = onUserDataClick,
-                onLinkClick = { link ->
-                    state.linkState.eventSink(LinkEvent.OnLinkClick(link))
-                },
-                onLinkLongClick = onLinkLongClick,
-                onContentClick = onEventClick,
-                onGalleryItemClick = onGalleryItemClick,
-                onLongClick = ::onMessageLongClick,
-                displayThreadSummaries = displayThreadSummaries,
-                inReplyToClick = {},
-                onReactionClick = ::onReactionClick,
-                onReactionLongClick = ::onReactionLongClick,
-                onMoreReactionsClick = ::onMoreReactionsClick,
-                onReadReceiptClick = {},
-                onSwipeToReply = {},
-                onJoinCallClick = {},
-                eventSink = { timelineItemEvent ->
-                    when (timelineItemEvent) {
-                        is TimelineEvent.OpenThread -> state.eventSink(PinnedMessagesListEvent.OpenThread(timelineItemEvent.threadRootEventId))
-                        else -> Unit
-                    }
-                },
-                eventContentView = { event, contentModifier, onContentLayoutChange ->
-                    TimelineItemEventContentViewWrapper(
-                        event = event,
-                        timelineProtectionState = state.timelineProtectionState,
-                        onContentClick = { onEventClick(event) },
-                        onGalleryItemClick = { index -> onGalleryItemClick(event, index) },
-                        onLongClick = { onMessageLongClick(event) },
-                        onLinkClick = { link ->
-                            state.linkState.eventSink(LinkEvent.OnLinkClick(link))
-                        },
-                        onLinkLongClick = onLinkLongClick,
-                        modifier = contentModifier,
-                        onContentLayoutChange = onContentLayoutChange
-                    )
-                },
-                selectionData = TimelineItemSelectionData(),
-            )
+        ComposeLocalTimelineEventRendererConfig(
+            isComposeRendererEnabled = state.useNewTimelineEventRenderer,
+            currentUserId = state.timelineRoomInfo.currentUserId,
+            fontScale = state.timelineFontScale,
+        )
+    }
+    ProvideTimelineEventRendererConfig(rendererConfig) {
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            state = rememberLazyListState(),
+            reverseLayout = true,
+            contentPadding = lazyColumnContentPadding + PaddingValues(vertical = 8.dp),
+        ) {
+            items(
+                items = state.timelineItems,
+                contentType = { timelineItem -> timelineItem.contentType() },
+                key = { timelineItem -> timelineItem.identifier() },
+            ) { timelineItem ->
+                TimelineItemRow(
+                    timelineItem = timelineItem,
+                    timelineMode = Timeline.Mode.PinnedEvents,
+                    timelineRoomInfo = state.timelineRoomInfo,
+                    timelineProtectionState = state.timelineProtectionState,
+                    isLastOutgoingMessage = false,
+                    focusedEventId = null,
+                    onUserDataClick = onUserDataClick,
+                    onLinkClick = { link ->
+                        state.linkState.eventSink(LinkEvent.OnLinkClick(link))
+                    },
+                    onLinkLongClick = onLinkLongClick,
+                    onContentClick = onEventClick,
+                    onGalleryItemClick = onGalleryItemClick,
+                    onLongClick = ::onMessageLongClick,
+                    displayThreadSummaries = displayThreadSummaries,
+                    inReplyToClick = {},
+                    onReactionClick = ::onReactionClick,
+                    onReactionLongClick = ::onReactionLongClick,
+                    onMoreReactionsClick = ::onMoreReactionsClick,
+                    onReadReceiptClick = {},
+                    onSwipeToReply = {},
+                    onJoinCallClick = {},
+                    eventSink = { timelineItemEvent ->
+                        when (timelineItemEvent) {
+                            is TimelineEvent.OpenThread -> state.eventSink(PinnedMessagesListEvent.OpenThread(timelineItemEvent.threadRootEventId))
+                            is TimelineEvent.ShowSendFailureDialog,
+                            is TimelineEvent.ComputeVerifiedUserSendFailure,
+                            is TimelineEvent.ShowShieldDialog,
+                            is TimelineEvent.LoadMore,
+                            is TimelineEvent.NavigateToPredecessorOrSuccessorRoom,
+                            is TimelineEvent.TimelineItemPollEvent,
+                            TimelineEvent.StopLiveLocationShare,
+                            is TimelineEvent.ValidateMedia -> Unit
+                        }
+                    },
+                    eventContentView = { event, contentModifier, onContentLayoutChange ->
+                        TimelineItemEventContentViewWrapper(
+                            event = event,
+                            timelineProtectionState = state.timelineProtectionState,
+                            onContentClick = { onEventClick(event) },
+                            onGalleryItemClick = { index -> onGalleryItemClick(event, index) },
+                            onLongClick = { onMessageLongClick(event) },
+                            onLinkClick = { link ->
+                                state.linkState.eventSink(LinkEvent.OnLinkClick(link))
+                            },
+                            onLinkLongClick = onLinkLongClick,
+                            modifier = contentModifier,
+                            onContentLayoutChange = onContentLayoutChange
+                        )
+                    },
+                    selectionData = TimelineItemSelectionData(),
+                )
+            }
         }
     }
     LinkView(

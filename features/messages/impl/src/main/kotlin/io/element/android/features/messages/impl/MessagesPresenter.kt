@@ -49,11 +49,21 @@ import io.element.android.features.messages.impl.timeline.TimelineState
 import io.element.android.features.messages.impl.timeline.components.customreaction.CustomReactionState
 import io.element.android.features.messages.impl.timeline.components.reactionsummary.ReactionSummaryState
 import io.element.android.features.messages.impl.timeline.components.receipt.bottomsheet.ReadReceiptBottomSheetState
+import io.element.android.features.messages.impl.timeline.isSelectionModeActive
 import io.element.android.features.messages.impl.timeline.model.TimelineItem
 import io.element.android.features.messages.impl.timeline.model.TimelineItemThreadInfo
+import io.element.android.features.messages.impl.timeline.model.event.TimelineItemAttachmentsContent
+import io.element.android.features.messages.impl.timeline.model.event.TimelineItemEncryptedContent
+import io.element.android.features.messages.impl.timeline.model.event.TimelineItemEventContentWithAttachment
+import io.element.android.features.messages.impl.timeline.model.event.TimelineItemGalleryContent
+import io.element.android.features.messages.impl.timeline.model.event.TimelineItemLegacyCallInviteContent
+import io.element.android.features.messages.impl.timeline.model.event.TimelineItemLocationContent
 import io.element.android.features.messages.impl.timeline.model.event.TimelineItemPollContent
+import io.element.android.features.messages.impl.timeline.model.event.TimelineItemRedactedContent
+import io.element.android.features.messages.impl.timeline.model.event.TimelineItemRtcNotificationContent
 import io.element.android.features.messages.impl.timeline.model.event.TimelineItemStateContent
 import io.element.android.features.messages.impl.timeline.model.event.TimelineItemTextBasedContent
+import io.element.android.features.messages.impl.timeline.model.event.TimelineItemUnknownContent
 import io.element.android.features.messages.impl.timeline.model.event.captionOrNull
 import io.element.android.features.messages.impl.timeline.model.event.htmlCaptionOrNull
 import io.element.android.features.messages.impl.timeline.protection.TimelineProtectionState
@@ -283,7 +293,7 @@ class MessagesPresenter(
                     if (selection != null) {
                         when (selection.action) {
                             SelectionAction.Forward -> {
-                                navigator.forwardEvents(timelineState.selectedEventIdsInTimelineOrder(), timelineController)
+                                navigator.forwardEvents(timelineState.selectedEventIdsInTimelineOrder())
                             }
                         }
                     }
@@ -382,7 +392,9 @@ class MessagesPresenter(
                 // TODO calculate this properly based on the thread list and the read state of each thread
                 hasUnreadThreads = false,
             ),
-            showLiveLocationShareBanner = isCurrentlySharingLiveLocationInRoom && timelineState.timelineMode !is Timeline.Mode.Thread,
+            showLiveLocationShareBanner = isCurrentlySharingLiveLocationInRoom &&
+                timelineState.timelineMode !is Timeline.Mode.Thread &&
+                !timelineState.isSelectionModeActive,
             redactEventAction = redactEventAction.value,
             eventSink = ::handleEvent,
         )
@@ -451,11 +463,7 @@ class MessagesPresenter(
             TimelineItemAction.ViewSource -> handleShowDebugInfoAction(targetEvent)
             TimelineItemAction.Forward -> {
                 val eventId = targetEvent.eventId ?: return@launch
-                if (featureFlagService.isFeatureEnabled(FeatureFlags.MessageMultiSelect)) {
-                    timelineState.eventSink(TimelineEvent.EnterSelectionMode(SelectionAction.Forward, eventId))
-                } else {
-                    navigator.forwardEvents(listOf(eventId), timelineController)
-                }
+                timelineState.eventSink(TimelineEvent.EnterSelectionMode(SelectionAction.Forward, eventId))
             }
             TimelineItemAction.ReportContent -> handleReportAction(targetEvent)
             TimelineItemAction.EndPoll -> handleEndPollAction(targetEvent, timelineState)
@@ -588,7 +596,17 @@ class MessagesPresenter(
                 if (targetEvent.eventId == null) return
                 navigator.navigateToEditPoll(targetEvent.eventId)
             }
-            else -> {
+            is TimelineItemTextBasedContent,
+            is TimelineItemEventContentWithAttachment,
+            is TimelineItemAttachmentsContent,
+            is TimelineItemGalleryContent,
+            is TimelineItemEncryptedContent,
+            is TimelineItemLocationContent,
+            is TimelineItemRtcNotificationContent,
+            is TimelineItemStateContent,
+            TimelineItemLegacyCallInviteContent,
+            TimelineItemRedactedContent,
+            TimelineItemUnknownContent -> {
                 val composerMode = MessageComposerMode.Edit(
                     targetEvent.eventOrTransactionId,
                     (targetEvent.content as? TimelineItemTextBasedContent)?.let {
@@ -606,7 +624,7 @@ class MessagesPresenter(
         }
     }
 
-    private suspend fun handleActionAddCaption(
+    private fun handleActionAddCaption(
         targetEvent: TimelineItem.Event,
         composerState: MessageComposerState,
     ) {
@@ -619,7 +637,7 @@ class MessagesPresenter(
         )
     }
 
-    private suspend fun handleActionEditCaption(
+    private fun handleActionEditCaption(
         targetEvent: TimelineItem.Event,
         composerState: MessageComposerState,
         enableTextFormatting: Boolean,
@@ -690,7 +708,16 @@ class MessagesPresenter(
         val content = when (event.content) {
             is TimelineItemTextBasedContent -> event.content.body
             is TimelineItemStateContent -> event.content.body
-            else -> return
+            is TimelineItemEventContentWithAttachment,
+            is TimelineItemAttachmentsContent,
+            is TimelineItemGalleryContent,
+            is TimelineItemEncryptedContent,
+            is TimelineItemLocationContent,
+            is TimelineItemPollContent,
+            is TimelineItemRtcNotificationContent,
+            TimelineItemLegacyCallInviteContent,
+            TimelineItemRedactedContent,
+            TimelineItemUnknownContent -> return
         }
         clipboardHelper.copyPlainText(content) {
             snackbarDispatcher.post(SnackbarMessage(R.string.screen_room_timeline_message_copied))

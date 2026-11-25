@@ -34,6 +34,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
@@ -61,12 +62,14 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -75,6 +78,7 @@ import androidx.compose.ui.text.style.ResolvedTextDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import io.element.android.compound.theme.ElementTheme
 import io.element.android.libraries.designsystem.components.linkify
@@ -87,6 +91,7 @@ import io.element.android.libraries.htmlrenderer.api.HeaderNode
 import io.element.android.libraries.htmlrenderer.api.HtmlMessageParser.Companion.INLINE_CODE_ANNOTATION_TAG
 import io.element.android.libraries.htmlrenderer.api.HtmlMessageParser.Companion.LINK_ANNOTATION_TAG
 import io.element.android.libraries.htmlrenderer.api.ListNode
+import io.element.android.libraries.htmlrenderer.api.LocalMentionDisplayNames
 import io.element.android.libraries.htmlrenderer.api.MentionNodeContent
 import io.element.android.libraries.htmlrenderer.api.ParagraphNode
 import io.element.android.libraries.htmlrenderer.api.QuoteNode
@@ -99,6 +104,9 @@ import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.launch
+
+internal const val MAX_MENTION_PILL_TEXT_LENGTH = 20
+private const val EVENT_LINK_PILL_PREFIX = "💬 > "
 
 /**
  * Renders a parsed message tree ([DocumentNode]) as native Compose content.
@@ -289,7 +297,6 @@ private fun TextBlock(
 }
 
 /** Maps an `<h1>`–`<h6>` [level] to a Compound typography style, largest first. */
-@Composable
 private fun headerTextStyle(level: Int): TextStyle = when (level) {
     // For safety reasons, use the same style for H1 and H2, to avoid people using H1 for 'shouting' spam that fills the timeline with huge text
     1, 2 -> ElementTheme.typography.fontHeadingLgBold
@@ -315,6 +322,8 @@ private fun CodeBlockView(
             .background(ElementTheme.colors.bgSubtleSecondary)
             .height(IntrinsicSize.Min)
             .combinedClickable(
+                interactionSource = null,
+                indication = ripple(focusRingShape = RoundedCornerShape(8.dp)),
                 onClick = {},
                 onLongClick = {
                     coroutineScope.launch {
@@ -416,7 +425,7 @@ private fun ListView(
 
 @Composable
 private fun MentionPill(
-    mention: MentionNodeContent,
+    displayText: String,
     isCurrentUser: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -428,12 +437,16 @@ private fun MentionPill(
             .fillMaxSize()
             .clip(RoundedCornerShape(percent = 50))
             .background(backgroundColor)
-            .clickable(onClick = onClick)
+            .clickable(
+                interactionSource = null,
+                indication = ripple(focusRingShape = RoundedCornerShape(percent = 50)),
+                onClick = onClick,
+            )
             .padding(horizontal = PillPaddingHorizontal, vertical = PillPaddingVertical),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = mention.displayText,
+            text = displayText,
             style = ElementTheme.typography.fontBodyLgMedium,
             color = textColor,
             maxLines = 1,
@@ -444,6 +457,10 @@ private fun MentionPill(
 /**
  * Builds an [InlineTextContent] entry for each mention placeholder. Each pill is measured so
  * the placeholder reserves exactly the space the pill needs.
+ *
+ * The pill text (display name and user status) is resolved using [LocalMentionDisplayNames], so the pills are measured again
+ * whenever the display name or status of one of the mentioned users or rooms changes. The text sizes are
+ * cached in [PillTextSizeCache], so the same pill text is only measured once for all messages.
  */
 @Composable
 private fun rememberMentionInlineContent(
@@ -454,10 +471,32 @@ private fun rememberMentionInlineContent(
     val textMeasurer = rememberTextMeasurer()
     val pillTextStyle = ElementTheme.typography.fontBodyLgMedium
     val density = LocalDensity.current
-    return mentions.mapValues { (_, mention) ->
-        val measured = textMeasurer.measure(mention.displayText, pillTextStyle)
-        val width = with(density) { measured.size.width.toDp() + PillPaddingHorizontal * 2 }
-        val height = with(density) { measured.size.height.toDp() + PillPaddingVertical * 2 }
+    val layoutDirection = LocalLayoutDirection.current
+    val mentionDisplayNames = LocalMentionDisplayNames.current
+    // Only the display texts of these mentions matter: since `derivedStateOf` only notifies its readers when its value changes,
+    // unrelated display name changes won't recompose this text nor trigger a new measure pass
+    val displayTexts by remember(mentions, mentionDisplayNames) {
+        derivedStateOf { mentions.mapValues { (_, mention) -> mentionDisplayNames.pillTextFor(mention) } }
+    }
+    return remember(mentions, displayTexts, context, textMeasurer, pillTextStyle, density, layoutDirection) {
+        buildMentionInlineContent(mentions, displayTexts, context, textMeasurer, pillTextStyle, density, layoutDirection)
+    }
+}
+
+private fun buildMentionInlineContent(
+    mentions: ImmutableMap<String, MentionNodeContent>,
+    displayTexts: Map<String, String>,
+    context: RenderContext,
+    textMeasurer: TextMeasurer,
+    pillTextStyle: TextStyle,
+    density: Density,
+    layoutDirection: LayoutDirection,
+): ImmutableMap<String, InlineTextContent> {
+    return mentions.mapValues { (id, mention) ->
+        val formattedText = mention.pillText(displayTexts[id] ?: mention.displayText)
+        val textSize = PillTextSizeCache.getOrMeasure(formattedText, pillTextStyle, density, layoutDirection, textMeasurer)
+        val width = with(density) { textSize.width.toDp() + PillPaddingHorizontal * 2 }
+        val height = with(density) { textSize.height.toDp() + PillPaddingVertical * 2 }
         InlineTextContent(
             placeholder = Placeholder(
                 width = with(density) { width.toSp() },
@@ -466,7 +505,7 @@ private fun rememberMentionInlineContent(
             ),
         ) {
             MentionPill(
-                mention = mention,
+                displayText = formattedText,
                 isCurrentUser = mention is MentionNodeContent.User && mention.userId == context.currentUserId,
                 onClick = { context.onMentionClick(mention) },
             )
@@ -601,3 +640,23 @@ private val InlineCodeHorizontalPadding: Dp = 2.dp
 
 /** The width of the fading edge gradient drawn at the left and right of a [CodeBlockView]. */
 private val CodeBlockFadingEdgeWidth: Dp = 32.dp
+
+/**
+ * Returns the text to display in the mention pill for this [MentionNodeContent]: [displayText] truncated to
+ * [MAX_MENTION_PILL_TEXT_LENGTH] characters, prefixed with a message indicator if the mention links to an event.
+ */
+internal fun MentionNodeContent.pillText(displayText: String): String {
+    val leadingContent = if (this is MentionNodeContent.Room && eventId != null) EVENT_LINK_PILL_PREFIX else ""
+    val truncatedText = if (displayText.length > MAX_MENTION_PILL_TEXT_LENGTH) {
+        // Don't split a surrogate pair (i.e. an emoji) in half
+        val endIndex = if (displayText[MAX_MENTION_PILL_TEXT_LENGTH - 1].isHighSurrogate()) {
+            MAX_MENTION_PILL_TEXT_LENGTH - 1
+        } else {
+            MAX_MENTION_PILL_TEXT_LENGTH
+        }
+        displayText.take(endIndex) + "…"
+    } else {
+        displayText
+    }
+    return leadingContent + truncatedText
+}

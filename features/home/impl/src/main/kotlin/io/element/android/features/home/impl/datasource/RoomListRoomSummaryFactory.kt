@@ -89,7 +89,9 @@ class RoomListRoomSummaryFactory(
                 CurrentUserMembership.KNOCKED -> {
                     RoomSummaryDisplayType.KNOCKED
                 }
-                else -> {
+                CurrentUserMembership.JOINED,
+                CurrentUserMembership.LEFT,
+                CurrentUserMembership.BANNED -> {
                     RoomSummaryDisplayType.ROOM
                 }
             },

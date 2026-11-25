@@ -14,7 +14,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -26,6 +25,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -122,7 +122,6 @@ fun RoomDetailsView(
     onProfileClick: (UserId) -> Unit,
     onReportRoomClick: () -> Unit,
     modifier: Modifier = Modifier,
-    additionalSections: @Composable ColumnScope.() -> Unit = {},
     leaveRoomView: @Composable () -> Unit,
 ) {
     val snackbarHostState = rememberSnackbarHostState(snackbarMessage = state.snackbarMessage)
@@ -197,8 +196,6 @@ fun RoomDetailsView(
                     onActionClick = onActionClick,
                 )
             }
-
-            additionalSections()
 
             PreferenceCategory {
                 if (state.hasNewContent) {
@@ -488,12 +485,19 @@ private fun RoomHeaderSection(
             contentDescription = stringResource(CommonStrings.a11y_room_avatar),
             modifier = Modifier
                 .clip(CircleShape)
-                .clickable(
-                    enabled = avatarUrl != null,
-                    onClickLabel = stringResource(CommonStrings.action_view),
-                ) {
-                    openAvatarPreview(avatarUrl!!)
-                }
+                .then(
+                    if (avatarUrl != null) {
+                        Modifier.clickable(
+                            interactionSource = null,
+                            indication = ripple(focusRingShape = CircleShape),
+                            onClickLabel = stringResource(CommonStrings.action_view),
+                        ) {
+                            openAvatarPreview(avatarUrl)
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
                 .testTag(TestTags.roomDetailAvatar)
         )
         Spacer(modifier = Modifier.height(24.dp))
@@ -531,8 +535,9 @@ private fun DmHeaderSection(
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        val avatarUrl = otherMember.avatarUrl
         Avatar(
-            avatarData = AvatarData(otherMember.userId.value, roomName, otherMember.avatarUrl, AvatarSize.RoomDetailsHeader),
+            avatarData = AvatarData(otherMember.userId.value, roomName, avatarUrl, AvatarSize.RoomDetailsHeader),
             avatarType = AvatarType.Room(
                 heroes = persistentListOf(
                     otherMember.getAvatarData(size = AvatarSize.RoomDetailsHeader)
@@ -542,12 +547,19 @@ private fun DmHeaderSection(
             contentDescription = stringResource(CommonStrings.a11y_room_avatar),
             modifier = Modifier
                 .clip(CircleShape)
-                .clickable(
-                    enabled = otherMember.avatarUrl != null,
-                    onClickLabel = stringResource(CommonStrings.action_view),
-                ) {
-                    openAvatarPreview(otherMember.getBestName(), otherMember.avatarUrl!!)
-                }
+                .then(
+                    if (avatarUrl != null) {
+                        Modifier.clickable(
+                            interactionSource = null,
+                            indication = ripple(focusRingShape = CircleShape),
+                            onClickLabel = stringResource(CommonStrings.action_view),
+                        ) {
+                            openAvatarPreview(otherMember.getBestName(), avatarUrl)
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
                 .testTag(TestTags.roomDetailAvatar)
         )
         Spacer(modifier = Modifier.height(24.dp))
@@ -743,7 +755,8 @@ private fun ProfileItem(
                 iconSource = IconSource.Vector(CompoundIcons.ErrorSolid()),
                 tintColor = ElementTheme.colors.iconCriticalPrimary,
             )
-            else -> null
+            UserProfileVerificationState.UNKNOWN,
+            UserProfileVerificationState.UNVERIFIED -> null
         },
         onClick = onClick,
     )

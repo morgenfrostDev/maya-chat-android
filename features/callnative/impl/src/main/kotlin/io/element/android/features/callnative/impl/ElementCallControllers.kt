@@ -17,9 +17,11 @@ import io.element.android.call.api.ElementCallOptions
 import io.element.android.call.api.rtc.MatrixRtcLogLevel
 import io.element.android.call.api.rtc.MatrixRtcLoggingConfiguration
 import io.element.android.call.impl.ElementCallStack
+import io.element.android.call.ui.ElementCallActivity
 import io.element.android.features.call.api.CurrentCallTracker
 import io.element.android.features.call.api.RingingCallTracker
-import io.element.android.features.callnative.api.ElementCallTransportFactory
+import io.element.android.features.callnative.api.MatrixRtcBackendFactory
+import io.element.android.features.callnative.impl.analytics.ElementXCallAnalytics
 import io.element.android.libraries.di.annotations.ApplicationContext
 import io.element.android.libraries.featureflag.api.FeatureFlagService
 import io.element.android.libraries.featureflag.api.FeatureFlags
@@ -38,6 +40,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
@@ -89,12 +92,13 @@ interface ElementCallControllers {
 class DefaultElementCallControllers(
     @ApplicationContext private val context: Context,
     private val matrixClientProvider: MatrixClientProvider,
-    private val transportFactory: ElementCallTransportFactory,
+    private val backendFactory: MatrixRtcBackendFactory,
     private val currentCallTracker: CurrentCallTracker,
     private val ringingCallTracker: RingingCallTracker,
     private val appForegroundStateService: AppForegroundStateService,
     private val appPreferencesStore: AppPreferencesStore,
     private val featureFlagService: FeatureFlagService,
+    private val analytics: ElementXCallAnalytics,
 ) : ElementCallControllers {
     // A flow rather than a plain map because what draws the call has to see the stack appear.
     private val stacks = MutableStateFlow<Map<SessionId, ElementCallStack>>(emptyMap())
@@ -112,11 +116,12 @@ class DefaultElementCallControllers(
         }
         build(client).also { stack ->
             stacks.update { it + (sessionId to stack) }
+            client.sessionCoroutineScope.launch { stack.controller.followConnectivity(client.syncService.isOnline) }
             // The client's scope is the stack's lifetime: the component has no shutdown of its own, so
             // cancelling this at logout is what stops the RTC core. Closing here only releases the
             // component's own reference, so a dead stack is not left behind it.
             client.sessionCoroutineScope.coroutineContext.job.invokeOnCompletion {
-                stacks.update { if (it[sessionId] === stack) it - sessionId else it }
+                stacks.update { stacksMap -> if (stacksMap[sessionId] === stack) stacksMap - sessionId else stacksMap }
                 stack.close()
             }
         }.controller
@@ -130,8 +135,9 @@ class DefaultElementCallControllers(
             stack.controller.takeIf { it.state.value != null }
         }
 
-    private suspend fun build(client: MatrixClient): ElementCallStack =
-        ElementCallStack.Builder(context, transportFactory.create(client))
+    private suspend fun build(client: MatrixClient): ElementCallStack {
+        analytics.awaitConsent()
+        return ElementCallStack.Builder(context, backendFactory.create(client))
             .lifecycleListener(
                 ElementXCallLifecycleListener(
                     sessionId = client.sessionId,
@@ -143,14 +149,20 @@ class DefaultElementCallControllers(
             )
             .roomContext(ElementXRoomContextProvider(client))
             .options(options())
+            .analytics(analytics)
             .build(scope = client.sessionCoroutineScope)
+    }
 
     private suspend fun options() = ElementCallOptions(
         logging = loggingConfiguration(),
+        // Shows the call's developer options (tile stats) in its Preferences sheet.
+        isDeveloperModeEnabled = appPreferencesStore.isDeveloperModeEnabledFlow().first(),
         notification = ElementCallNotificationConfig(
             // The same id the WebView call's foreground service uses, so that the two paths cannot
             // leave two ongoing-call notifications in the shade.
             notificationId = NotificationIdProvider.getForegroundServiceNotificationId(ForegroundServiceType.ONGOING_CALL),
+            // The call screen itself, which shows over the lock screen, rather than the launcher Activity.
+            contentIntent = ElementCallActivity::pendingIntent,
         ),
     )
 

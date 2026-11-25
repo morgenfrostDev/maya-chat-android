@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.input.maxLength
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -172,7 +173,7 @@ private fun CurrentStatusRow(
     ListItem(
         content = { Text(text = text) },
         leadingContent = ListItemContent.Custom { EmojiText(emoji) },
-        trailingContent = ListItemContent.Custom({
+        trailingContent = ListItemContent.Custom {
             IconButton(
                 onClick = onClear,
                 // Remove the extra padding caused by IconButton
@@ -183,7 +184,7 @@ private fun CurrentStatusRow(
                     contentDescription = stringResource(CommonStrings.action_clear),
                 )
             }
-        }),
+        },
         onClick = onClick,
         modifier = modifier,
     )
@@ -302,7 +303,7 @@ private fun CustomStatusInputRow(
                 }
             )
         },
-        trailingContent = ListItemContent.Custom({
+        trailingContent = ListItemContent.Custom {
             // Layout measures both buttons to determine the max natural width,
             // then places only the active one.
             Layout(
@@ -322,21 +323,25 @@ private fun CustomStatusInputRow(
                     )
                 }
             }
-        }),
-        leadingContent = ListItemContent.Custom({
+        },
+        leadingContent = ListItemContent.Custom {
             Surface(
                 shape = CircleShape,
                 border = BorderStroke(1.dp, ElementTheme.colors.bgSubtleSecondary),
                 modifier = Modifier
                     .size(50.dp)
                     .clip(CircleShape)
-                    .clickable(onClick = onEmojiClick),
+                    .clickable(
+                        interactionSource = null,
+                        indication = ripple(focusRingShape = CircleShape),
+                        onClick = onEmojiClick,
+                    ),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     EmojiText(emoji)
                 }
             }
-        }),
+        },
         modifier = modifier,
     )
 }
