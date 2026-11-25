@@ -27,6 +27,7 @@ import extension.setupDependencyInjection
 import extension.testCommonDependencies
 import org.sonarqube.gradle.SonarResolverTask
 import java.util.Locale
+import java.util.Properties
 
 plugins {
     id("io.element.android-compose-application")
@@ -88,6 +89,13 @@ android {
             storeFile = file("./signature/debug.keystore")
             storePassword = "android"
         }
+
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.inputStream().use { localProperties.load(it) }
+        }
+
         register("nightly") {
             keyAlias = environmentOrGradleValue("ELEMENT_ANDROID_NIGHTLY_KEYID", "signing.element.nightly.keyId")
             keyPassword = environmentOrGradleValue("ELEMENT_ANDROID_NIGHTLY_KEYPASSWORD", "signing.element.nightly.keyPassword")
@@ -97,6 +105,18 @@ android {
                     ?: "./signature/nightly.keystore"
             )
             storePassword = environmentOrGradleValue("ELEMENT_ANDROID_NIGHTLY_STOREPASSWORD", "signing.element.nightly.storePassword")
+        }
+        register("release") {
+            keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                ?: (project.findProperty("signing.release.keyAlias") as? String)
+                ?: localProperties.getProperty("signing.release.keyAlias")
+            keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+                ?: (project.findProperty("signing.release.keyPassword") as? String)
+                ?: localProperties.getProperty("signing.release.keyPassword")
+            storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+                ?: (project.findProperty("signing.release.storePassword") as? String)
+                ?: localProperties.getProperty("signing.release.storePassword")
+            storeFile = file("./signature/release.keystore")
         }
     }
 
@@ -124,7 +144,7 @@ android {
                 "login_redirect_scheme",
                 oAuthRedirectSchemeBase,
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
 
             optimization {
                 enable = true

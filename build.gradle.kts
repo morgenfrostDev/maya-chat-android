@@ -18,6 +18,8 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.dependencycheck) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    id("org.jetbrains.kotlin.plugin.parcelize") version "2.3.20" apply false
     alias(libs.plugins.dependencyanalysis)
     alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
@@ -125,8 +127,8 @@ dependencyAnalysis {
 // Sonar result can be found here: https://sonarcloud.io/project/overview?id=element-x-android
 sonar {
     properties {
-        property("sonar.projectName", "element-x-android")
-        property("sonar.projectKey", "element-x-android")
+        property("sonar.projectName", "MayaChat")
+        property("sonar.projectKey", "MayaChat")
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.projectVersion", "1.0") // TODO project(":app").android.defaultConfig.versionName)
         property("sonar.sourceEncoding", "UTF-8")
@@ -225,9 +227,9 @@ subprojects {
         doFirst {
             println("Delete previous screenshots located at $snapshotsDir\n")
             snapshotsDir.deleteRecursively()
+            }
         }
     }
-}
 
 // Delete the screenshots of previews that no longer exist, *after* recording.
 //
