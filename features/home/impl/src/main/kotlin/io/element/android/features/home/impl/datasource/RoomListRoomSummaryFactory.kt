@@ -15,6 +15,7 @@ import io.element.android.features.home.impl.model.RoomSummaryDisplayType
 import io.element.android.libraries.core.extensions.orEmpty
 import io.element.android.libraries.dateformatter.api.DateFormatter
 import io.element.android.libraries.dateformatter.api.DateFormatterMode
+import io.element.android.libraries.dateformatter.api.MayaCalendarHelper
 import io.element.android.libraries.designsystem.components.avatar.AvatarSize
 import io.element.android.libraries.eventformatter.api.RoomLatestEventFormatter
 import io.element.android.libraries.matrix.api.room.CallIntentConsensus
@@ -25,6 +26,9 @@ import io.element.android.libraries.matrix.api.roomlist.RoomSummary
 import io.element.android.libraries.matrix.ui.model.dmUserStatus
 import io.element.android.libraries.matrix.ui.model.getAvatarData
 import io.element.android.libraries.matrix.ui.model.toInviteSender
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlinx.collections.immutable.toImmutableList
 
 @Inject
@@ -43,12 +47,28 @@ class RoomListRoomSummaryFactory(
             numberOfUnreadMentions = roomInfo.numUnreadMentions,
             numberOfUnreadNotifications = roomInfo.numUnreadNotifications,
             isMarkedUnread = roomInfo.isMarkedUnread,
-            timestamp = dateFormatter.format(
-                timestamp = roomSummary.latestEventTimestamp,
-                mode = DateFormatterMode.TimeOrDate,
-                useRelative = true,
-            ),
-            latestEvent = computeLatestEvent(roomSummary.latestEvent, roomInfo.hasOnlyTwoMembers()),
+            timestamp = let {
+                val latestEventTimestamp = roomSummary.latestEventTimestamp
+                val baseTimestamp = dateFormatter.format(
+                    timestamp = latestEventTimestamp,
+                    mode = DateFormatterMode.TimeOrDate,
+                    useRelative = true,
+                )
+                if (latestEventTimestamp != null && baseTimestamp.isNotEmpty()) {
+                    val isToday = Instant.ofEpochMilli(latestEventTimestamp)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate() == LocalDate.now()
+                    if (isToday) {
+                        baseTimestamp
+                    } else {
+                        val mayaDate = MayaCalendarHelper.getMayaDate(latestEventTimestamp)
+                        "${mayaDate.day} ${mayaDate.winalName}"
+                    }
+                } else {
+                    baseTimestamp
+                }
+            },
+            latestEvent = computeLatestEvent(roomSummary.latestEvent, roomInfo.isDm),
             avatarData = avatarData,
             userDefinedNotificationMode = roomInfo.userDefinedNotificationMode,
             hasRoomCall = roomInfo.hasRoomCall,
