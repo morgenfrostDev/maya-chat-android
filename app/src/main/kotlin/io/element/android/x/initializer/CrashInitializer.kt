@@ -16,9 +16,13 @@ import io.element.android.libraries.architecture.bindings
 
 class CrashInitializer : Initializer<Unit> {
     override fun create(context: Context) {
+        val bindings = context.bindings<RageshakeBindings>()
         VectorUncaughtExceptionHandler(
-            context.bindings<RageshakeBindings>().preferencesCrashDataStore(),
-        ).activate()
+            context = context,
+            buildMeta = bindings.buildMeta(),
+            dispatchers = bindings.coroutineDispatchers(),
+            crashDataStore = bindings.preferencesCrashDataStore(),
+        )
     }
 
     override fun dependencies(): List<Class<out Initializer<*>>> = emptyList()

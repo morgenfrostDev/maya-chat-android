@@ -11,8 +11,12 @@ package io.element.android.features.rageshake.impl.di
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import io.element.android.features.rageshake.impl.crash.PreferencesCrashDataStore
+import io.element.android.libraries.core.coroutine.CoroutineDispatchers
+import io.element.android.libraries.core.meta.BuildMeta
 
 @ContributesTo(AppScope::class)
 interface RageshakeBindings {
     fun preferencesCrashDataStore(): PreferencesCrashDataStore
+    fun buildMeta(): BuildMeta
+    fun coroutineDispatchers(): CoroutineDispatchers
 }
