@@ -112,3 +112,6 @@ lint/tmp/
 .DS_Store
 
 checkouts/**
+
+# Release signing keystore and its secrets must never be committed
+app/signature/release.keystore
