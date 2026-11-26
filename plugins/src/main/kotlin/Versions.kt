@@ -45,7 +45,7 @@ private const val versionWinal = 15
  * Release number in the winal. Value must be in [0,99].
  * Do not update this value. it is updated by the release script.
  */
-private const val versionReleaseNumber = 0
+private const val versionReleaseNumber = 1
 
 object Versions {
     /**
