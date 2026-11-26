@@ -12,4 +12,8 @@ sealed interface PreferencesRootEvent {
     data object OnVersionInfoClick : PreferencesRootEvent
     data object ToggleOtherAccountsExpanded : PreferencesRootEvent
     data class SetTheme(val theme: ThemeOption) : PreferencesRootEvent
+    data class SetThemeColor(val colorHex: String) : PreferencesRootEvent
+    data object ResetThemeColor : PreferencesRootEvent
+    data class SetChatBackgroundImageEnabled(val enabled: Boolean) : PreferencesRootEvent
+    data class SetChatBackgroundImage(val uri: String?) : PreferencesRootEvent
 }

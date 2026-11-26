@@ -23,6 +23,9 @@ import kotlinx.collections.immutable.ImmutableList
 data class PreferencesRootState(
     val myUser: MatrixUser,
     val theme: ThemeOption,
+    val themeColor: String,
+    val isChatBackgroundImageEnabled: Boolean,
+    val chatBackgroundImageUri: String?,
     val messageTextSize: Int,
     val preferencesAccountState: PreferencesAccountState,
     val availableThemeOptions: ImmutableList<ThemeOption>,

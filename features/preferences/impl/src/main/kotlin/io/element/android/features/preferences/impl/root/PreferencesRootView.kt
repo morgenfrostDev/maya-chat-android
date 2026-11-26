@@ -8,8 +8,13 @@
 
 package io.element.android.features.preferences.impl.root
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.ColumnScope
@@ -17,8 +22,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -230,6 +240,7 @@ private fun AppSettingsSection(
                 state.eventSink(PreferencesRootEvent.SetTheme(themeOption))
             }
         )
+        ColorThemeItems(state = state)
         ListItem(
             content = { Text(stringResource(id = R.string.screen_settings_message_text_size_title)) },
             leadingContent = ListItemContent.Icon(IconSource.Vector(CompoundIcons.TextFormatting())),
@@ -253,6 +264,76 @@ private fun AppSettingsSection(
                 onClick = onOpenLocationSettings,
             )
         }
+    }
+}
+
+@Composable
+private fun ColumnScope.ColorThemeItems(state: PreferencesRootState) {
+    if (state.theme != ThemeOption.Color) return
+    var displayColorPickerDialog by remember { mutableStateOf(false) }
+    val contentResolver = LocalContext.current.contentResolver
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            state.eventSink(PreferencesRootEvent.SetChatBackgroundImage(uri.toString()))
+        }
+    }
+    ListItem(
+        modifier = Modifier.combinedClickable(
+            onClick = { displayColorPickerDialog = true },
+            onLongClick = { state.eventSink(PreferencesRootEvent.ResetThemeColor) },
+        ),
+        content = {
+            Text(text = stringResource(id = R.string.screen_advanced_settings_theme_color))
+        },
+        trailingContent = ListItemContent.Text(
+            text = state.themeColor.uppercase()
+        ),
+    )
+    if (displayColorPickerDialog) {
+        ColorThemePickerDialog(
+            initialColorHex = state.themeColor,
+            onSubmit = { newColorHex ->
+                state.eventSink(PreferencesRootEvent.SetThemeColor(newColorHex))
+                displayColorPickerDialog = false
+            },
+            onDismiss = { displayColorPickerDialog = false },
+        )
+    }
+    ListItem(
+        content = {
+            Text(text = stringResource(id = R.string.screen_advanced_settings_background_image))
+        },
+        trailingContent = ListItemContent.Switch(
+            checked = state.isChatBackgroundImageEnabled,
+        ),
+        onClick = {
+            state.eventSink(PreferencesRootEvent.SetChatBackgroundImageEnabled(!state.isChatBackgroundImageEnabled))
+        },
+    )
+    if (state.isChatBackgroundImageEnabled) {
+        ListItem(
+            modifier = Modifier.combinedClickable(
+                onClick = {
+                    pickImageLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                },
+                onLongClick = { state.eventSink(PreferencesRootEvent.SetChatBackgroundImage(null)) },
+            ),
+            content = {
+                Text(text = stringResource(id = R.string.screen_advanced_settings_choose_background_image))
+            },
+            trailingContent = ListItemContent.Text(
+                text = if (state.chatBackgroundImageUri != null) {
+                    stringResource(R.string.common_custom)
+                } else {
+                    stringResource(R.string.common_default)
+                }
+            ),
+        )
     }
 }
 

@@ -52,6 +52,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
+private const val DEFAULT_THEME_COLOR = "#4d00b2"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @Inject
 class PreferencesRootPresenter(
@@ -95,6 +97,16 @@ class PreferencesRootPresenter(
         val theme = remember(isBlackThemeAllowed) {
             appPreferencesStore.getThemeFlow().mapToTheme(isBlackThemeAllowed)
         }.collectAsState(initial = Theme.System)
+
+        val themeColor by remember {
+            appPreferencesStore.getThemeColorFlow()
+        }.collectAsState(initial = DEFAULT_THEME_COLOR)
+        val isChatBackgroundImageEnabled by remember {
+            appPreferencesStore.isChatBackgroundImageEnabledFlow()
+        }.collectAsState(initial = true)
+        val chatBackgroundImageUri by remember {
+            appPreferencesStore.getChatBackgroundImageFlow()
+        }.collectAsState(initial = null)
 
         val messageTextSize by remember {
             appPreferencesStore.getMessageTextSizeFlow()
@@ -160,6 +172,18 @@ class PreferencesRootPresenter(
                         ThemeOption.Color -> appPreferencesStore.setTheme(Theme.Color.name)
                     }
                 }
+                is PreferencesRootEvent.SetThemeColor -> sessionCoroutineScope.launch {
+                    appPreferencesStore.setThemeColor(event.colorHex)
+                }
+                PreferencesRootEvent.ResetThemeColor -> sessionCoroutineScope.launch {
+                    appPreferencesStore.setThemeColor(DEFAULT_THEME_COLOR)
+                }
+                is PreferencesRootEvent.SetChatBackgroundImageEnabled -> sessionCoroutineScope.launch {
+                    appPreferencesStore.setChatBackgroundImageEnabled(event.enabled)
+                }
+                is PreferencesRootEvent.SetChatBackgroundImage -> sessionCoroutineScope.launch {
+                    appPreferencesStore.setChatBackgroundImage(event.uri)
+                }
             }
         }
 
@@ -168,6 +192,9 @@ class PreferencesRootPresenter(
             userStatusState = userStatusState,
             preferencesAccountState = preferencesAccountState,
             theme = themeOption,
+            themeColor = themeColor,
+            isChatBackgroundImageEnabled = isChatBackgroundImageEnabled,
+            chatBackgroundImageUri = chatBackgroundImageUri,
             messageTextSize = messageTextSize,
             availableThemeOptions = availableThemeOptions,
             version = remember { versionFormatter.get() },

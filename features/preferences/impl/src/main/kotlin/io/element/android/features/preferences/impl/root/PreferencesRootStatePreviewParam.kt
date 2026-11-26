@@ -84,6 +84,17 @@ open class PreferencesRootStatePreviewParam : PreviewParameterProvider<Preferenc
             ),
             // Message text at the largest size
             aPreferencesRootState(messageTextSize = MessageTextSize.MAX),
+            // Color theme with a custom colour and a chat background image
+            aPreferencesRootState(
+                theme = ThemeOption.Color,
+                themeColor = "#1E88E5",
+                chatBackgroundImageUri = "anImageUri",
+            ),
+            // Color theme with the chat background image disabled
+            aPreferencesRootState(
+                theme = ThemeOption.Color,
+                isChatBackgroundImageEnabled = false,
+            ),
         )
 }
 
@@ -94,6 +105,9 @@ fun aPreferencesRootState(
     isMultiAccountEnabled: Boolean = false,
     isOtherAccountsSectionExpanded: Boolean = false,
     theme: ThemeOption = ThemeOption.System,
+    themeColor: String = "#4d00b2",
+    isChatBackgroundImageEnabled: Boolean = true,
+    chatBackgroundImageUri: String? = null,
     availableThemeOptions: List<ThemeOption> = ThemeOption.entries,
     messageTextSize: Int = MessageTextSize.DEFAULT,
     otherSessions: List<OtherAccount> = emptyList(),
@@ -110,6 +124,9 @@ fun aPreferencesRootState(
     version = version,
     isMultiAccountEnabled = isMultiAccountEnabled,
     theme = theme,
+    themeColor = themeColor,
+    isChatBackgroundImageEnabled = isChatBackgroundImageEnabled,
+    chatBackgroundImageUri = chatBackgroundImageUri,
     availableThemeOptions = availableThemeOptions.toImmutableList(),
     messageTextSize = messageTextSize,
     isOtherAccountsSectionExpanded = isOtherAccountsSectionExpanded,
