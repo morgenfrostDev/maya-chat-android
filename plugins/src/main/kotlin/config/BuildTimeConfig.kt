@@ -21,7 +21,7 @@ object BuildTimeConfig {
     val URL_LOGO: String? = null
     val URL_COPYRIGHT: String? = null
     val URL_ACCEPTABLE_USE: String? = null
-    val URL_PRIVACY: String? = null
+    val URL_PRIVACY: String? = "https://sites.google.com/view/privacy-policy-of-maya-chat"
     val URL_POLICY: String? = null
     val SERVICES_MAPTILER_BASE_URL: String? = null
     val SERVICES_MAPTILER_APIKEY: String? = null
